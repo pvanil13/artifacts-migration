@@ -1,0 +1,44 @@
+name: Docker Hub Image Migration
+
+on:
+  workflow_dispatch:  # allows manual trigger
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Migrate Docker image
+        env:
+          SOURCE_REGISTRY: docker.io
+          SOURCE_USERNAME: ${{ secrets.SOURCE_USERNAME }}
+          SOURCE_PASSWORD: ${{ secrets.SOURCE_PASSWORD }}
+          SOURCE_REPO: pvdocker2532/mywebapp
+          DEST_REGISTRY: docker.io
+          DEST_USERNAME: ${{ secrets.DEST_USERNAME }}
+          DEST_PASSWORD: ${{ secrets.DEST_PASSWORD }}
+          DEST_REPO: anildocker2532/sample-app
+          TAGS: "v1"
+        run: |
+          # Login to source Docker Hub
+          echo "$SOURCE_PASSWORD" | docker login "$SOURCE_REGISTRY" -u "$SOURCE_USERNAME" --password-stdin
+
+          # Login to destination Docker Hub
+          echo "$DEST_PASSWORD" | docker login "$DEST_REGISTRY" -u "$DEST_USERNAME" --password-stdin
+
+          # Pull the image from source
+          docker pull "$SOURCE_REPO:$TAGS"
+
+          # Tag it for destination
+          docker tag "$SOURCE_REPO:$TAGS" "$DEST_REPO:$TAGS"
+
+          # Push to destination
+          docker push "$DEST_REPO:$TAGS"
+
+          echo "Docker image migration completed successfully!"
