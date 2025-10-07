@@ -1,4 +1,4 @@
-name: Artifact Migration
+name: Artifact Migration-Source type
 
 on:
   workflow_dispatch:
