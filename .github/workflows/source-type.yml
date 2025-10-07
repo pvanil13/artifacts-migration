@@ -1,0 +1,65 @@
+name: Artifact Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_type:
+        description: 'Type of artifact (docker, zip, tar.gz)'
+        required: true
+        default: 'docker'
+      source_path:
+        description: 'Source path or image (e.g. ./build/app.zip or pvdocker2532/mywebapp:v1)'
+        required: true
+      dest_repo:
+        description: 'Destination repo (e.g. anildocker2532/sample-app)'
+        required: true
+      dest_tag:
+        description: 'Destination tag (e.g. v1)'
+        required: false
+        default: 'latest'
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Handle Docker Image Migration
+        if: ${{ inputs.artifact_type == 'docker' }}
+        run: |
+          echo "Pulling source image: ${{ inputs.source_path }}"
+          docker pull ${{ inputs.source_path }}
+          
+          echo "Tagging image to destination: ${{ inputs.dest_repo }}:${{ inputs.dest_tag }}"
+          docker tag ${{ inputs.source_path }} ${{ inputs.dest_repo }}:${{ inputs.dest_tag }}
+
+          echo "Pushing image to destination Docker Hub"
+          docker push ${{ inputs.dest_repo }}:${{ inputs.dest_tag }}
+
+      - name: Handle Non-Container Artifacts (zip/tar.gz)
+        if: ${{ inputs.artifact_type != 'docker' }}
+        run: |
+          echo "Processing non-container artifact: ${{ inputs.source_path }}"
+          mkdir -p dist
+          cp ${{ inputs.source_path }} dist/
+          ls -lh dist/
+
+          # Later you can replace this with JFrog CLI upload
+          echo "Simulating upload to Docker Hub or artifact repo (currently local test)"
+          echo "Artifact copied successfully to ./dist/"
+
+      - name: Summary
+        run: |
+          echo "Migration complete."
+          echo "Source: ${{ inputs.source_path }}"
+          echo "Destination: ${{ inputs.dest_repo }}:${{ inputs.dest_tag }}"
