@@ -1,0 +1,28 @@
+name: Check JFrog CLI
+
+on:
+  workflow_dispatch:   # Run manually from the Actions tab
+  push:                # Optional - run on push
+    branches:
+      - main
+
+jobs:
+  check-jfrog-cli:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install JFrog CLI
+        run: |
+          curl -fL https://getcli.jfrog.io | sh
+          sudo mv jfrog /usr/local/bin/jfrog
+          jfrog --version
+
+      - name: Verify JFrog CLI configuration
+        run: |
+          echo "JFrog CLI version:"
+          jfrog --version
+          echo "JFrog CLI help (subset):"
+          jfrog -h | head -n 15
