@@ -26,3 +26,25 @@ jobs:
           jfrog --version
           echo "JFrog CLI help (subset):"
           jfrog -h | head -n 15
+      - name: Check if JFrog CLI is installed
+        run: |
+          if command -v jfrog >/dev/null 2>&1; then
+            echo "✅ JFrog CLI is installed."
+            jfrog --version
+          else
+            echo "❌ JFrog CLI is NOT installed on this runner."
+            exit 1
+          fi
+
+      - name: Check if JFrog CLI is configured
+        run: |
+          CONFIG_OUTPUT=$(jfrog config show 2>&1 || true)
+          if echo "$CONFIG_OUTPUT" | grep -q "Server ID"; then
+            echo "✅ JFrog CLI is configured:"
+            echo "$CONFIG_OUTPUT"
+          else
+            echo "⚠️ JFrog CLI is NOT configured."
+            echo "$CONFIG_OUTPUT"
+          fi
+     
+
